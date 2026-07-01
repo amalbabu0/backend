@@ -24,17 +24,27 @@ async def command(parts: list[Any]) -> Any:
   if not is_configured():
     raise UpstashError("Upstash environment variables are not configured.", 503, "UPSTASH_NOT_CONFIGURED")
 
-  async with httpx.AsyncClient(timeout=10) as client:
-    response = await client.post(
-      settings.upstash_redis_rest_url,
-      headers={
-        "Authorization": f"Bearer {settings.upstash_redis_rest_token}",
-        "Content-Type": "application/json"
-      },
-      json=parts
-    )
+  try:
+    async with httpx.AsyncClient(timeout=10) as client:
+      response = await client.post(
+        settings.upstash_redis_rest_url,
+        headers={
+          "Authorization": f"Bearer {settings.upstash_redis_rest_token}",
+          "Content-Type": "application/json"
+        },
+        json=parts
+      )
+  except httpx.RequestError as exc:
+    raise UpstashError("Could not reach Upstash from the server.", 502, "UPSTASH_NETWORK_ERROR") from exc
 
-  data = response.json()
+  try:
+    data = response.json()
+  except ValueError as exc:
+    raise UpstashError("Upstash returned an invalid response.", 502, "UPSTASH_INVALID_RESPONSE") from exc
+
+  if not isinstance(data, dict):
+    raise UpstashError("Upstash returned an invalid response.", 502, "UPSTASH_INVALID_RESPONSE")
+
   if response.status_code >= 400 or data.get("error"):
     status_code = 401 if response.status_code == 401 else 502
     raise UpstashError(data.get("error", "Upstash request failed."), status_code, "UPSTASH_REQUEST_FAILED")

@@ -2,6 +2,20 @@
 
 FastAPI backend for Supabase-authenticated cache storage.
 
+## Architecture
+
+The backend now runs as a microservice-style API gateway on Vercel. Each business area has its own service folder with independent router and service logic, while the public API contract stays stable for the frontend.
+
+```text
+app/services/catalog        Product catalog and product cache
+app/services/cart           User cart cache
+app/services/orders         Order history and status updates
+app/services/cache_manager  Cache warming, clearing, and inspection
+app/services/platform       Health and service registry endpoints
+```
+
+Use `GET /api/services` to see the service registry and `GET /health` to check gateway health.
+
 ## Env
 
 ```text
@@ -24,12 +38,17 @@ uvicorn app.main:app --reload --port 8000
 ## Endpoints
 
 - `GET /health`
+- `GET /api/services`
+- `GET /api/catalog/health`
 - `GET /api/products`
+- `GET /api/cart/health`
 - `GET /api/cart`
 - `PUT /api/cart`
 - `DELETE /api/cart`
+- `GET /api/orders/health`
 - `GET /api/orders`
 - `POST /api/orders`
 - `PATCH /api/orders/{order_id}`
+- `GET /api/cache/health`
 - `GET /api/cache`
 - `POST /api/cache`
