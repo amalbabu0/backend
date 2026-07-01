@@ -23,6 +23,9 @@ UPSTASH_REDIS_REST_URL=https://your-database-name.upstash.io
 UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_rest_token
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your_supabase_anon_key
+RAZORPAY_KEY_ID=rzp_test_or_live_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+RAZORPAY_CURRENCY=INR
 CORS_ORIGINS=http://localhost:5173,https://your-frontend-domain.vercel.app
 ```
 
@@ -49,6 +52,9 @@ uvicorn app.main:app --reload --port 8000
 - `GET /api/orders`
 - `POST /api/orders`
 - `PATCH /api/orders/{order_id}`
+- `GET /api/payments/health`
+- `POST /api/payments/razorpay/order`
+- `POST /api/payments/razorpay/verify`
 - `GET /api/cache/health`
 - `GET /api/cache`
 - `POST /api/cache`

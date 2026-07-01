@@ -20,7 +20,13 @@ async def write_orders(user_id: str, orders: list[dict]) -> None:
   await set_json(user_key(user_id, "orders"), orders[:50])
 
 
-async def create_order_for_user(user_id: str, payload: OrderIn) -> dict:
+async def create_order_for_user(
+  user_id: str,
+  payload: OrderIn,
+  payment: dict | None = None,
+  total_paise: int | None = None,
+  pricing: dict | None = None
+) -> dict:
   incoming_items = payload.items
   if incoming_items is None:
     incoming_items = [
@@ -32,17 +38,22 @@ async def create_order_for_user(user_id: str, payload: OrderIn) -> dict:
     raise HTTPException(status_code=400, detail="Cart is empty.")
 
   normalized = normalize_items(incoming_items)
-  total_paise = sum(item["lineTotalPaise"] for item in normalized)
+  calculated_total_paise = sum(item["lineTotalPaise"] for item in normalized)
   now = utc_now()
   order = {
     "id": f"ORD-{uuid4().hex[:10].upper()}",
     "status": payload.status,
     "items": normalized,
     "itemCount": sum(item["quantity"] for item in normalized),
-    "totalPaise": total_paise,
+    "totalPaise": total_paise if total_paise is not None else calculated_total_paise,
     "createdAt": now,
     "updatedAt": now
   }
+  if payment:
+    order["payment"] = payment
+  if pricing:
+    order["pricing"] = pricing
+
   orders = await read_orders(user_id)
   await write_orders(user_id, [order, *orders])
   await write_cart(user_id, [])

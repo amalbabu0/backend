@@ -22,6 +22,9 @@ class Settings:
   upstash_redis_rest_token: str = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
   supabase_url: str = os.getenv("SUPABASE_URL", "").rstrip("/")
   supabase_anon_key: str = os.getenv("SUPABASE_ANON_KEY", "")
+  razorpay_key_id: str = os.getenv("RAZORPAY_KEY_ID", "")
+  razorpay_key_secret: str = os.getenv("RAZORPAY_KEY_SECRET", "")
+  razorpay_currency: str = os.getenv("RAZORPAY_CURRENCY", "INR")
   cors_origins: tuple[str, ...] = tuple(csv(os.getenv("CORS_ORIGINS", "http://localhost:5173")))
 
 

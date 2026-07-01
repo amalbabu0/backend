@@ -25,6 +25,12 @@ SERVICE_REGISTRY = [
     "routes": ["GET /api/orders", "POST /api/orders", "PATCH /api/orders/{order_id}"]
   },
   {
+    "name": "payments",
+    "responsibility": "Razorpay order creation and payment signature verification.",
+    "health": "/api/payments/health",
+    "routes": ["POST /api/payments/razorpay/order", "POST /api/payments/razorpay/verify"]
+  },
+  {
     "name": "cache-manager",
     "responsibility": "Cache inspection, warming, refreshing, and user cache clearing.",
     "health": "/api/cache/health",
@@ -41,7 +47,8 @@ async def health() -> dict:
     "architecture": "microservice-gateway",
     "services": [service["name"] for service in SERVICE_REGISTRY],
     "upstashConfigured": is_configured(),
-    "supabaseConfigured": bool(settings.supabase_url and settings.supabase_anon_key)
+    "supabaseConfigured": bool(settings.supabase_url and settings.supabase_anon_key),
+    "razorpayConfigured": bool(settings.razorpay_key_id and settings.razorpay_key_secret)
   }
 
 
