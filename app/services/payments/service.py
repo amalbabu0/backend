@@ -168,7 +168,7 @@ async def verify_razorpay_payment(user_id: str, payload: RazorpayVerifyIn) -> di
     OrderIn(
       status="success",
       items=[
-        CartItemIn(productId=item["productId"], quantity=item["quantity"])
+        CartItemIn(**item)
         for item in intent_items
       ]
     ),

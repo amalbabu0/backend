@@ -22,16 +22,28 @@ def normalize_items(items: list[CartItemIn]) -> list[dict]:
   normalized = []
   for item in items:
     product = find_product(item.productId)
-    if not product:
-      raise HTTPException(status_code=400, detail="Cart contains an invalid product.")
+    if product:
+      normalized.append({
+        "productId": product["id"],
+        "name": product["name"],
+        "pricePaise": product["pricePaise"],
+        "quantity": item.quantity,
+        "lineTotalPaise": product["pricePaise"] * item.quantity
+      })
+      continue
 
-    normalized.append({
-      "productId": product["id"],
-      "name": product["name"],
-      "pricePaise": product["pricePaise"],
-      "quantity": item.quantity,
-      "lineTotalPaise": product["pricePaise"] * item.quantity
-    })
+    if item.productId.startswith("seller-") and item.name and item.pricePaise:
+      normalized.append({
+        "productId": item.productId,
+        "sellerProductId": item.sellerProductId or item.productId.removeprefix("seller-"),
+        "name": item.name,
+        "pricePaise": item.pricePaise,
+        "quantity": item.quantity,
+        "lineTotalPaise": item.pricePaise * item.quantity
+      })
+      continue
+
+    raise HTTPException(status_code=400, detail="Cart contains an invalid product.")
 
   return normalized
 

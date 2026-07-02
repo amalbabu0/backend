@@ -31,7 +31,7 @@ async def create_order_for_user(
   incoming_items = payload.items
   if incoming_items is None:
     incoming_items = [
-      CartItemIn(productId=item["productId"], quantity=item["quantity"])
+      CartItemIn(**item)
       for item in await read_cart(user_id)
     ]
 
