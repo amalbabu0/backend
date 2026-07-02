@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from ...settings import get_settings
 from ...upstash import delete_keys, get_json, set_json
 from ..cart.schemas import CartItemIn
-from ..cart.service import read_cart, user_key
+from ..cart.service import normalize_items, read_cart, user_key
 from ..common import utc_now
 from ..orders.schemas import OrderIn
 from ..orders.service import create_order_for_user
@@ -67,12 +67,18 @@ def address_data(address: PaymentAddressIn | None) -> dict | None:
   return address.dict()
 
 
-async def create_razorpay_order(user_id: str, address: PaymentAddressIn | None = None) -> dict:
+async def create_razorpay_order(
+  user_id: str,
+  address: PaymentAddressIn | None = None,
+  items: list[CartItemIn] | None = None,
+  checkout_mode: str = "cart"
+) -> dict:
   settings = get_settings()
   if not razorpay_configured():
     raise HTTPException(status_code=503, detail="Razorpay backend env vars are not configured.")
 
-  cart = await read_cart(user_id)
+  is_buy_now = checkout_mode == "buyNow"
+  cart = normalize_items(items or []) if is_buy_now else await read_cart(user_id)
   if not cart:
     raise HTTPException(status_code=400, detail="Cart is empty.")
 
@@ -120,6 +126,9 @@ async def create_razorpay_order(user_id: str, address: PaymentAddressIn | None =
       "currency": settings.razorpay_currency,
       "receipt": receipt,
       "cart": cart,
+      "items": cart,
+      "checkoutMode": "buyNow" if is_buy_now else "cart",
+      "clearCartAfterPayment": not is_buy_now,
       "address": address_data(address),
       "summary": summary,
       "createdAt": utc_now()
@@ -153,13 +162,14 @@ async def verify_razorpay_payment(user_id: str, payload: RazorpayVerifyIn) -> di
   if not hmac.compare_digest(expected, payload.razorpaySignature):
     raise HTTPException(status_code=400, detail="Payment verification failed.")
 
+  intent_items = intent.get("items") or intent.get("cart", [])
   order = await create_order_for_user(
     user_id,
     OrderIn(
       status="success",
       items=[
         CartItemIn(productId=item["productId"], quantity=item["quantity"])
-        for item in intent.get("cart", [])
+        for item in intent_items
       ]
     ),
     payment={
@@ -171,7 +181,8 @@ async def verify_razorpay_payment(user_id: str, payload: RazorpayVerifyIn) -> di
       "verifiedAt": utc_now()
     },
     total_paise=intent.get("amountPaise"),
-    pricing=intent.get("summary")
+    pricing=intent.get("summary"),
+    clear_cart=bool(intent.get("clearCartAfterPayment", True))
   )
   await delete_keys([payment_intent_key(user_id)])
   return {"order": order}

@@ -24,7 +24,7 @@ async def payments_health() -> dict:
 @router.post("/api/payments/razorpay/order")
 async def create_payment_order(payload: RazorpayOrderIn, user: UserDep) -> dict:
   try:
-    return await create_razorpay_order(user.id, payload.address)
+    return await create_razorpay_order(user.id, payload.address, payload.items, payload.checkoutMode)
   except UpstashError as error:
     raise upstash_http_error(error) from error
 

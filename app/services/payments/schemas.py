@@ -1,4 +1,8 @@
+from typing import Literal
+
 from pydantic import BaseModel
+
+from ..cart.schemas import CartItemIn
 
 
 class PaymentAddressIn(BaseModel):
@@ -12,6 +16,8 @@ class PaymentAddressIn(BaseModel):
 
 class RazorpayOrderIn(BaseModel):
   address: PaymentAddressIn | None = None
+  items: list[CartItemIn] | None = None
+  checkoutMode: Literal["cart", "buyNow"] = "cart"
 
 
 class RazorpayVerifyIn(BaseModel):

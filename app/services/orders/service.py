@@ -25,7 +25,8 @@ async def create_order_for_user(
   payload: OrderIn,
   payment: dict | None = None,
   total_paise: int | None = None,
-  pricing: dict | None = None
+  pricing: dict | None = None,
+  clear_cart: bool = True
 ) -> dict:
   incoming_items = payload.items
   if incoming_items is None:
@@ -56,7 +57,8 @@ async def create_order_for_user(
 
   orders = await read_orders(user_id)
   await write_orders(user_id, [order, *orders])
-  await write_cart(user_id, [])
+  if clear_cart:
+    await write_cart(user_id, [])
   return order
 
 
