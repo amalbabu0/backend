@@ -78,7 +78,7 @@ async def create_razorpay_order(
     raise HTTPException(status_code=503, detail="Razorpay backend env vars are not configured.")
 
   is_buy_now = checkout_mode == "buyNow"
-  cart = normalize_items(items or []) if is_buy_now else await read_cart(user_id)
+  cart = normalize_items(items) if items is not None else await read_cart(user_id)
   if not cart:
     raise HTTPException(status_code=400, detail="Cart is empty.")
 
